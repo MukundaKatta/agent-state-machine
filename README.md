@@ -56,6 +56,7 @@ assert sm.is_terminal()
 - `StateNotFoundError` — state name not registered
 - `InvalidEventError` — event not valid from current state
 - `DuplicateTransitionError` — transition already declared
+- `SelfLoopError` — self-loop transition declared while `allow_self_loops=False`
 - `InitialStateNotSetError` — trigger/reset before initial state set
 
 ## License

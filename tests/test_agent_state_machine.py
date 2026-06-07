@@ -9,6 +9,7 @@ from agent_state_machine.core import (
     DuplicateTransitionError,
     InitialStateNotSetError,
     InvalidEventError,
+    SelfLoopError,
     StateNotFoundError,
 )
 
@@ -112,6 +113,24 @@ def test_add_transition_missing_to_state_raises():
     sm.add_state("a", is_initial=True)
     with pytest.raises(StateNotFoundError):
         sm.add_transition("a", "missing", "go")
+
+
+def test_add_self_loop_rejected_by_default():
+    sm = StateMachine()
+    sm.add_state("a", is_initial=True)
+    with pytest.raises(SelfLoopError) as exc_info:
+        sm.add_transition("a", "a", "loop")
+    assert exc_info.value.state == "a"
+    assert exc_info.value.event == "loop"
+
+
+def test_add_self_loop_allowed_when_enabled():
+    sm = StateMachine(allow_self_loops=True)
+    sm.add_state("a", is_initial=True)
+    sm.add_transition("a", "a", "loop")
+    assert sm.trigger("loop") == "a"
+    assert sm.current == "a"
+    assert len(sm.history) == 1
 
 
 def test_add_duplicate_transition_raises():

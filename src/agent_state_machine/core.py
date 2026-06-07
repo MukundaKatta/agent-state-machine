@@ -66,6 +66,18 @@ class DuplicateTransitionError(StateMachineError):
         )
 
 
+class SelfLoopError(StateMachineError):
+    """Raised when a self-loop transition is declared but not allowed."""
+
+    def __init__(self, state: str, event: str) -> None:
+        self.state = state
+        self.event = event
+        super().__init__(
+            f"Self-loop transition ({state!r}, {event!r}) is not allowed; "
+            "pass allow_self_loops=True to permit it."
+        )
+
+
 @dataclass
 class _StateInfo:
     name: str
@@ -210,6 +222,8 @@ class StateMachine:
 
         Raises:
             StateNotFoundError: If either state is not registered.
+            SelfLoopError: If *from_state* equals *to_state* and
+                ``allow_self_loops`` is ``False``.
             DuplicateTransitionError: If this (from_state, event) pair is
                 already registered.
         """
@@ -217,6 +231,8 @@ class StateMachine:
             raise StateNotFoundError(from_state)
         if to_state not in self._states:
             raise StateNotFoundError(to_state)
+        if from_state == to_state and not self._allow_self_loops:
+            raise SelfLoopError(from_state, event)
         key = (from_state, event)
         if key in self._transitions:
             raise DuplicateTransitionError(from_state, event)
